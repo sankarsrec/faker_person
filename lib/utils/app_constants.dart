@@ -8,4 +8,6 @@ class AppConstants {
   static const String error = 'Error';
   static const String errorDescription =
       'Something went wrong, Kindly try again later';
+  static const String noMoreData = 'No more data';
+  static const String loadMore = 'Load More';
 }

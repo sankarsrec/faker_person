@@ -5,11 +5,11 @@ import '../../utils/app_colors.dart';
 class CustomToast {
   static show({
     required String message,
-    String? description,
+    String description = '',
     bool isError = false,
   }) {
     Fluttertoast.showToast(
-      msg: '$message\n${description ?? ''}',
+      msg: '$message${description.isNotEmpty ? '\n' : ''}$description',
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.CENTER,
       timeInSecForIosWeb: 1,

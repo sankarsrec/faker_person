@@ -18,63 +18,70 @@ class PersonsCubit extends Cubit<PersonsState> {
   Future<void> fetchPersons({
     bool isViewMore = false,
   }) async {
-    const int pageCount = 10;
+    if ((!isViewMore || state.loadedCount < 40) &&
+        state.fetchPersonsStatus != ApiStatus.loading &&
+        state.loadMorePersonsStatus != ApiStatus.loading) {
+      if (isViewMore) {
+        emit(
+          state.copyWith(
+            loadMorePersonsStatus: ApiStatus.loading,
+          ),
+        );
+      } else {
+        emit(
+          state.copyWith(
+            fetchPersonsStatus: ApiStatus.loading,
+            isLoadMoreAvailable: false,
+            loadedPersonsList: [],
+            loadedCount: 0,
+          ),
+        );
+      }
 
-    if (isViewMore) {
-      emit(
-        state.copyWith(
-          loadMorePersonsStatus: ApiStatus.loading,
-        ),
-      );
-    } else {
-      emit(
-        state.copyWith(
-          fetchPersonsStatus: ApiStatus.loading,
-          isLoadMoreAvailable: false,
-          loadedPersonsList: [],
-          loadedCount: 0,
-        ),
-      );
-    }
+      try {
+        final response = await personsUseCase.getPersons();
 
-    try {
-      final response = await personsUseCase.getPersons(
-        count: state.loadedCount + pageCount,
-      );
+        response.fold(
+          (failure) {
+            emit(
+              state.copyWith(
+                fetchPersonsStatus: ApiStatus.error,
+                loadMorePersonsStatus: ApiStatus.error,
+                loadedPersonsList: [],
+                loadedCount: 0,
+                isLoadMoreAvailable: false,
+              ),
+            );
+          },
+          (success) {
+            final List<PersonEntity> newPersonsList =
+                List.from(state.loadedPersonsList);
+            newPersonsList.addAll(success);
 
-      response.fold(
-        (failure) {
-          emit(
-            state.copyWith(
-              fetchPersonsStatus: ApiStatus.error,
-              loadedPersonsList: [],
-              loadedCount: 0,
-              isLoadMoreAvailable: false,
-            ),
-          );
-        },
-        (success) {
-          final int newViewedCount = state.loadedCount + pageCount;
+            final int newLoadedCount = newPersonsList.length;
 
-          emit(
-            state.copyWith(
-              fetchPersonsStatus: ApiStatus.success,
-              loadedPersonsList: success,
-              loadedCount: success.length,
-              isLoadMoreAvailable: newViewedCount <= success.length,
-            ),
-          );
-        },
-      );
-    } catch (exception) {
-      emit(
-        state.copyWith(
-          fetchPersonsStatus: ApiStatus.error,
-          loadedPersonsList: [],
-          loadedCount: 0,
-          isLoadMoreAvailable: false,
-        ),
-      );
+            emit(
+              state.copyWith(
+                fetchPersonsStatus: ApiStatus.success,
+                loadMorePersonsStatus: ApiStatus.success,
+                loadedPersonsList: newPersonsList,
+                loadedCount: newPersonsList.length,
+                isLoadMoreAvailable: newLoadedCount < 40,
+              ),
+            );
+          },
+        );
+      } catch (exception) {
+        emit(
+          state.copyWith(
+            fetchPersonsStatus: ApiStatus.error,
+            loadMorePersonsStatus: ApiStatus.error,
+            loadedPersonsList: [],
+            loadedCount: 0,
+            isLoadMoreAvailable: false,
+          ),
+        );
+      }
     }
   }
 }

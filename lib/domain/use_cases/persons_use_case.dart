@@ -11,9 +11,7 @@ class PersonsUseCase {
 
   final PersonsRepository personsRepository;
 
-  Future<Either<ServerResponseEntity, List<PersonEntity>>> getPersons({
-    required int count,
-  }) async {
+  Future<Either<ServerResponseEntity, List<PersonEntity>>> getPersons() async {
     return await personsRepository.getPersons();
   }
 }
